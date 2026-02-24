@@ -66,3 +66,7 @@ Open:
 - `GET /missions/{id}`
 - `POST /missions`
 - `POST /missions/{id}/assign`
+- `POST /orders`
+- `GET /orders?status=&priority=`
+- `GET /orders/{id}`
+- `PATCH /orders/{id}`
