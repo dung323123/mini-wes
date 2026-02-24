@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.api.deps import get_db
 from app.models.mission import Mission
 from app.models.mission_step import MissionStep
+from app.models.order import Order
 from app.models.robot import Robot
 from app.schemas.mission import MissionOut, MissionCreate, MissionAssign, MissionDetailOut
 from app.services.simulator import start_mission_simulation
@@ -54,6 +55,11 @@ def get_mission(mission_id: UUID, db: Session = Depends(get_db)):
 
 @router.post("", response_model=MissionOut, status_code=201)
 def create_mission(payload: MissionCreate, db: Session = Depends(get_db)):
+    if payload.order_id:
+        order = db.execute(select(Order).where(Order.id == payload.order_id)).scalars().first()
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+
     code = _make_mission_code(db)
 
     m = Mission(
@@ -61,6 +67,7 @@ def create_mission(payload: MissionCreate, db: Session = Depends(get_db)):
         mission_type=payload.mission_type,
         status="CREATED",
         priority=payload.priority,
+        order_id=payload.order_id,
         assigned_robot_id=None,
         progress_pct=0,
         created_at=_now(),

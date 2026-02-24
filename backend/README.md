@@ -70,3 +70,5 @@ Open:
 - `GET /orders?status=&priority=`
 - `GET /orders/{id}`
 - `PATCH /orders/{id}`
+- `GET /tasks?status=&robot_id=&order_id=`
+- `GET /tasks/{id}`

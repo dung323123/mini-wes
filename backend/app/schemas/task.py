@@ -3,21 +3,10 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.schemas.mission_step import MissionStepCreate, MissionStepOut
+from app.schemas.mission_step import MissionStepOut
 
 
-class MissionCreate(BaseModel):
-    mission_type: str
-    priority: int = 5
-    order_id: UUID | None = None
-    steps: list[MissionStepCreate]
-
-
-class MissionAssign(BaseModel):
-    robot_id: UUID
-
-
-class MissionOut(BaseModel):
+class TaskOut(BaseModel):
     id: UUID
     code: str
     mission_type: str
@@ -31,11 +20,9 @@ class MissionOut(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    steps: list[MissionStepOut] = []
-
     class Config:
         from_attributes = True
 
 
-class MissionDetailOut(MissionOut):
-    pass
+class TaskDetailOut(TaskOut):
+    steps: list[MissionStepOut] = []

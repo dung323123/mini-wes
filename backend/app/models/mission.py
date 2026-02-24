@@ -19,6 +19,7 @@ class Mission(Base):
 
     priority: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
 
+    order_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=True)
     assigned_robot_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("robots.id"), nullable=True)
     progress_pct: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
@@ -29,6 +30,7 @@ class Mission(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     robot = relationship("Robot")
+    order = relationship("Order")
 
     steps = relationship(
         "MissionStep",
