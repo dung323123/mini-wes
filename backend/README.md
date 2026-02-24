@@ -44,6 +44,19 @@ source .venv/bin/activate
 python -m app.seed.seed
 ```
 
+Seed mặc định sẽ `reset` dữ liệu hiện có rồi tạo fake data đầy đủ cho:
+- robots
+- orders
+- missions + mission_steps
+- telemetry
+- events
+
+Nếu muốn giữ dữ liệu cũ và chỉ thêm:
+
+```bash
+python -m app.seed.seed --no-reset
+```
+
 ## 5) Run API
 
 ```bash
