@@ -9,6 +9,7 @@ from sqlalchemy import select
 from app.core.db import SessionLocal
 from app.models.mission import Mission
 from app.models.mission_step import MissionStep
+from app.models.order import Order
 from app.models.robot import Robot
 
 
@@ -27,6 +28,9 @@ def _run_mission(mission_id: UUID) -> None:
         mission = db.execute(select(Mission).where(Mission.id == mission_id)).scalars().first()
         if not mission:
             return
+        order = None
+        if mission.order_id:
+            order = db.execute(select(Order).where(Order.id == mission.order_id)).scalars().first()
 
         # mission phải có robot
         if not mission.assigned_robot_id:
@@ -44,6 +48,11 @@ def _run_mission(mission_id: UUID) -> None:
         mission.status = "RUNNING"
         mission.started_at = _now()
         mission.updated_at = _now()
+        if order:
+            order.status = "RUNNING"
+            if not order.started_at:
+                order.started_at = _now()
+            order.updated_at = _now()
         db.commit()
 
         total = max(len(steps), 1)
@@ -77,6 +86,10 @@ def _run_mission(mission_id: UUID) -> None:
                 mission.status = "FAILED"
                 mission.finished_at = _now()
                 mission.updated_at = _now()
+                if order:
+                    order.status = "FAILED"
+                    order.finished_at = _now()
+                    order.updated_at = _now()
 
                 robot.status = "ERROR"
                 robot.updated_at = _now()
@@ -98,6 +111,10 @@ def _run_mission(mission_id: UUID) -> None:
         mission.status = "COMPLETED"
         mission.finished_at = _now()
         mission.updated_at = _now()
+        if order:
+            order.status = "COMPLETED"
+            order.finished_at = _now()
+            order.updated_at = _now()
 
         robot.status = "IDLE"
         robot.updated_at = _now()

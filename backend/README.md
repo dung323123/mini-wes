@@ -72,3 +72,5 @@ Open:
 - `PATCH /orders/{id}`
 - `GET /tasks?status=&robot_id=&order_id=`
 - `GET /tasks/{id}`
+- `POST /allocator/run`
+- `GET /allocator/runs/{id}`

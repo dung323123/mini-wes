@@ -125,6 +125,13 @@ def assign_mission(mission_id: UUID, payload: MissionAssign, db: Session = Depen
     robot.status = "BUSY"
     robot.updated_at = _now()
     robot.last_seen_at = _now()
+    if mission.order_id:
+        order = db.execute(select(Order).where(Order.id == mission.order_id)).scalars().first()
+        if order:
+            order.status = "RUNNING"
+            if not order.started_at:
+                order.started_at = _now()
+            order.updated_at = _now()
 
     db.commit()
 
