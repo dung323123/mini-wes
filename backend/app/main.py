@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routers.robots import router as robots_router
 from app.api.routers.missions import router as missions_router
@@ -10,6 +11,18 @@ from app.api.routers.events import router as events_router
 from app.api.routers.dashboard import router as dashboard_router
 
 app = FastAPI(title="Mini WES API", version="0.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "http://0.0.0.0:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(robots_router)
 app.include_router(missions_router)
