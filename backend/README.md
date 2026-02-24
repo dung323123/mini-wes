@@ -58,8 +58,10 @@ Open:
 
 ## Available APIs
 
-- `GET /robots?status=&type=`
+- `POST /robots`
+- `GET /robots?status=&type=&enabled=`
 - `GET /robots/{id}` (`include_mission=true|false`)
+- `PATCH /robots/{id}`
 - `GET /missions?status=&robot_id=`
 - `GET /missions/{id}`
 - `POST /missions`
