@@ -69,6 +69,23 @@ Open:
 - `http://127.0.0.1:8000/health`
 - `http://127.0.0.1:8000/docs`
 
+## 6) Deploy FastAPI (Render)
+
+Repo đã có sẵn:
+- `render.yaml` (ở root project)
+- `backend/start.sh` (run migration + start uvicorn)
+
+Các bước:
+1. Push code lên GitHub.
+2. Vào Render -> `New` -> `Blueprint` -> chọn repo.
+3. Render sẽ đọc `render.yaml` và tạo service `mini-wes-backend`.
+4. Trong service, set env var:
+- `DATABASE_URL`: connection string Supabase (dạng `postgresql+psycopg2://...?...sslmode=require`)
+- `CORS_ORIGINS`: domain frontend, ví dụ `https://your-frontend.vercel.app`
+5. Deploy và kiểm tra:
+- `https://<render-service>/health`
+- `https://<render-service>/docs`
+
 ## Available APIs
 
 - `POST /robots`

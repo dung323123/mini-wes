@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: mini-wes-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: ./start.sh
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        value: http://127.0.0.1:5173,http://localhost:5173
