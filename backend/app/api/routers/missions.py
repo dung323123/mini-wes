@@ -1,15 +1,15 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_db
 from app.models.mission import Mission
 from app.models.mission_step import MissionStep
 from app.models.robot import Robot
-from app.schemas.mission import MissionOut, MissionCreate, MissionAssign
+from app.schemas.mission import MissionOut, MissionCreate, MissionAssign, MissionDetailOut
 from app.services.simulator import start_mission_simulation
 
 router = APIRouter(prefix="/missions", tags=["missions"])
@@ -28,9 +28,28 @@ def _make_mission_code(db: Session) -> str:
 
 
 @router.get("", response_model=list[MissionOut])
-def list_missions(db: Session = Depends(get_db)):
-    missions = db.execute(select(Mission).order_by(Mission.created_at.desc())).scalars().all()
+def list_missions(
+    status: str | None = Query(default=None),
+    robot_id: UUID | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    stmt = select(Mission).options(selectinload(Mission.steps)).order_by(Mission.created_at.desc())
+    if status:
+        stmt = stmt.where(Mission.status == status)
+    if robot_id:
+        stmt = stmt.where(Mission.assigned_robot_id == robot_id)
+    missions = db.execute(stmt).scalars().all()
     return missions
+
+
+@router.get("/{mission_id}", response_model=MissionDetailOut)
+def get_mission(mission_id: UUID, db: Session = Depends(get_db)):
+    mission = db.execute(
+        select(Mission).options(selectinload(Mission.steps)).where(Mission.id == mission_id)
+    ).scalars().first()
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+    return mission
 
 
 @router.post("", response_model=MissionOut, status_code=201)
@@ -68,7 +87,9 @@ def create_mission(payload: MissionCreate, db: Session = Depends(get_db)):
     db.commit()
 
     # reload để có relationship steps
-    m = db.execute(select(Mission).where(Mission.id == m.id)).scalars().first()
+    m = db.execute(
+        select(Mission).options(selectinload(Mission.steps)).where(Mission.id == m.id)
+    ).scalars().first()
     return m
 
 
@@ -104,5 +125,7 @@ def assign_mission(mission_id: UUID, payload: MissionAssign, db: Session = Depen
     start_mission_simulation(mission.id)
 
     # reload
-    mission = db.execute(select(Mission).where(Mission.id == mission.id)).scalars().first()
+    mission = db.execute(
+        select(Mission).options(selectinload(Mission.steps)).where(Mission.id == mission.id)
+    ).scalars().first()
     return mission

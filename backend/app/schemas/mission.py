@@ -33,3 +33,7 @@ class MissionOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class MissionDetailOut(MissionOut):
+    pass
