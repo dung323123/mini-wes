@@ -10,6 +10,7 @@ from app.api.deps import get_db
 from app.models.mission import Mission
 from app.models.robot import Robot
 from app.schemas.robot import RobotOut, RobotDetailOut, RobotMissionSummary, RobotCreate, RobotUpdate
+from app.services.events import log_event
 
 router = APIRouter(prefix="/robots", tags=["robots"])
 
@@ -63,6 +64,8 @@ def create_robot(payload: RobotCreate, db: Session = Depends(get_db)):
     )
     db.add(robot)
     try:
+        db.flush()
+        log_event(db, "ROBOT_REGISTERED", message=f"Robot {robot.name} registered", robot_id=robot.id)
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -134,6 +137,13 @@ def update_robot(robot_id: UUID, payload: RobotUpdate, db: Session = Depends(get
     robot.updated_at = _now()
     if any(v is not None for v in (payload.last_pose_x, payload.last_pose_y, payload.last_pose_theta, payload.battery_pct)):
         robot.last_seen_at = _now()
+
+    log_event(
+        db,
+        "ROBOT_UPDATED",
+        message=f"Robot {robot.name} updated (status={robot.status})",
+        robot_id=robot.id,
+    )
 
     try:
         db.commit()

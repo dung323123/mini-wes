@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db
 from app.models.order import Order
 from app.schemas.order import OrderCreate, OrderOut, OrderUpdate
+from app.services.events import log_event
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -39,6 +40,8 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
     )
     db.add(order)
     try:
+        db.flush()
+        log_event(db, "ORDER_CREATED", message=f"Order {order.code} created", order_id=order.id)
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -82,6 +85,20 @@ def update_order(order_id: UUID, payload: OrderUpdate, db: Session = Depends(get
         if payload.status == "CANCELED" and order.status in ("COMPLETED", "FAILED"):
             raise HTTPException(status_code=400, detail="Cannot cancel a completed/failed order")
         order.status = payload.status
+        log_event(
+            db,
+            "ORDER_STATUS_CHANGED",
+            message=f"Order {order.code} status -> {order.status}",
+            order_id=order.id,
+        )
+
+    if payload.priority is not None:
+        log_event(
+            db,
+            "ORDER_PRIORITY_UPDATED",
+            message=f"Order {order.code} priority -> {order.priority}",
+            order_id=order.id,
+        )
 
     order.updated_at = _now()
     db.commit()

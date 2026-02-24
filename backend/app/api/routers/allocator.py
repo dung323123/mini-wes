@@ -21,6 +21,7 @@ from app.schemas.allocator import (
     AllocatorRunRequest,
     AllocatorRunResponse,
 )
+from app.services.events import log_event
 from app.services.simulator import start_mission_simulation
 
 router = APIRouter(prefix="/allocator", tags=["allocator"])
@@ -72,6 +73,11 @@ def run_allocator(payload: AllocatorRunRequest, db: Session = Depends(get_db)):
     )
     db.add(run)
     db.flush()
+    log_event(
+        db,
+        "ALLOCATOR_RUN_STARTED",
+        message=f"Allocator run started: max_orders={payload.max_orders}, battery_min={payload.battery_min_pct}",
+    )
 
     assigned: list[AllocationAssigned] = []
     unassigned: list[AllocationUnassigned] = []
@@ -93,6 +99,12 @@ def run_allocator(payload: AllocatorRunRequest, db: Session = Depends(get_db)):
                 created_at=_now(),
             )
             db.add(run_item)
+            log_event(
+                db,
+                "ALLOCATION_UNASSIGNED",
+                message=f"Order {order.code} unassigned: NO_IDLE_ROBOT",
+                order_id=order.id,
+            )
             unassigned.append(AllocationUnassigned(order_id=order.id, reason="NO_IDLE_ROBOT"))
             continue
 
@@ -121,6 +133,12 @@ def run_allocator(payload: AllocatorRunRequest, db: Session = Depends(get_db)):
                 created_at=_now(),
             )
             db.add(run_item)
+            log_event(
+                db,
+                "ALLOCATION_UNASSIGNED",
+                message=f"Order {order.code} unassigned: NO_ELIGIBLE_ROBOT",
+                order_id=order.id,
+            )
             unassigned.append(AllocationUnassigned(order_id=order.id, reason="NO_ELIGIBLE_ROBOT"))
             continue
 
@@ -182,6 +200,14 @@ def run_allocator(payload: AllocatorRunRequest, db: Session = Depends(get_db)):
                 created_at=_now(),
             )
         )
+        log_event(
+            db,
+            "ALLOCATION_ASSIGNED",
+            message=f"Order {order.code} assigned to robot {robot.name}",
+            order_id=order.id,
+            robot_id=robot.id,
+            mission_id=mission.id,
+        )
 
         assigned.append(
             AllocationAssigned(
@@ -197,6 +223,11 @@ def run_allocator(payload: AllocatorRunRequest, db: Session = Depends(get_db)):
     run.assigned_count = len(assigned)
     run.unassigned_count = len(unassigned)
     run.completed_at = _now()
+    log_event(
+        db,
+        "ALLOCATOR_RUN_COMPLETED",
+        message=f"Allocator completed: assigned={len(assigned)}, unassigned={len(unassigned)}",
+    )
 
     db.commit()
 

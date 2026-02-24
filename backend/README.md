@@ -78,3 +78,6 @@ Open:
 - `GET /telemetry/latest?robot_id=`
 - `GET /telemetry?robot_id=&from=&to=&limit=`
 - `GET /telemetry/export.csv?robot_id=&from=&to=`
+- `GET /events?type=&robot_id=&order_id=&mission_id=&from=&to=&limit=`
+- `GET /dashboard/summary`
+- `GET /dashboard/fleet`

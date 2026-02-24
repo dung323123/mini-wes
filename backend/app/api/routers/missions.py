@@ -11,6 +11,7 @@ from app.models.mission_step import MissionStep
 from app.models.order import Order
 from app.models.robot import Robot
 from app.schemas.mission import MissionOut, MissionCreate, MissionAssign, MissionDetailOut
+from app.services.events import log_event
 from app.services.simulator import start_mission_simulation
 
 router = APIRouter(prefix="/missions", tags=["missions"])
@@ -91,6 +92,13 @@ def create_mission(payload: MissionCreate, db: Session = Depends(get_db)):
         )
 
     db.add_all(steps)
+    log_event(
+        db,
+        "MISSION_CREATED",
+        message=f"Mission {m.code} created",
+        mission_id=m.id,
+        order_id=m.order_id,
+    )
     db.commit()
 
     # reload để có relationship steps
@@ -132,6 +140,23 @@ def assign_mission(mission_id: UUID, payload: MissionAssign, db: Session = Depen
             if not order.started_at:
                 order.started_at = _now()
             order.updated_at = _now()
+            log_event(
+                db,
+                "ORDER_STATUS_CHANGED",
+                message=f"Order {order.code} status -> RUNNING",
+                order_id=order.id,
+                mission_id=mission.id,
+                robot_id=robot.id,
+            )
+
+    log_event(
+        db,
+        "MISSION_ASSIGNED",
+        message=f"Mission {mission.code} assigned to robot {robot.name}",
+        mission_id=mission.id,
+        robot_id=robot.id,
+        order_id=mission.order_id,
+    )
 
     db.commit()
 
