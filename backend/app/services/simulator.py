@@ -11,6 +11,7 @@ from app.models.mission import Mission
 from app.models.mission_step import MissionStep
 from app.models.order import Order
 from app.models.robot import Robot
+from app.models.telemetry import Telemetry
 
 
 def _now():
@@ -39,6 +40,19 @@ def _run_mission(mission_id: UUID) -> None:
         robot = db.execute(select(Robot).where(Robot.id == mission.assigned_robot_id)).scalars().first()
         if not robot:
             return
+
+        db.add(
+            Telemetry(
+                robot_id=robot.id,
+                x=robot.last_pose_x,
+                y=robot.last_pose_y,
+                theta=robot.last_pose_theta,
+                battery_pct=robot.battery_pct,
+                recorded_at=_now(),
+                created_at=_now(),
+            )
+        )
+        db.commit()
 
         steps = db.execute(
             select(MissionStep).where(MissionStep.mission_id == mission.id).order_by(MissionStep.seq.asc())
@@ -77,6 +91,17 @@ def _run_mission(mission_id: UUID) -> None:
             robot.last_pose_theta += random.uniform(-0.2, 0.2)
             robot.last_seen_at = _now()
             robot.updated_at = _now()
+            db.add(
+                Telemetry(
+                    robot_id=robot.id,
+                    x=robot.last_pose_x,
+                    y=robot.last_pose_y,
+                    theta=robot.last_pose_theta,
+                    battery_pct=robot.battery_pct,
+                    recorded_at=_now(),
+                    created_at=_now(),
+                )
+            )
 
             if fail:
                 step.status = "FAILED"
