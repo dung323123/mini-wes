@@ -19,7 +19,9 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Ensure Alembic uses DATABASE_URL from .env via Settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# ConfigParser used by Alembic treats '%' as interpolation marker.
+# Escape it so URL-encoded secrets (e.g. %23) work correctly.
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("%", "%%"))
 
 # add your model's MetaData object here for 'autogenerate' support
 target_metadata = Base.metadata
