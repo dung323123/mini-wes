@@ -86,6 +86,25 @@ Các bước:
 - `https://<render-service>/health`
 - `https://<render-service>/docs`
 
+## 7) Testing (pytest)
+
+Tạo DB test riêng và set env trước khi chạy (không dùng production DB):
+
+```bash
+cd backend
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+export TEST_DATABASE_URL='postgresql+psycopg2://<user>:<pass>@<host>:5432/<db>?sslmode=require'
+pytest -q
+```
+
+Bộ test hiện tại kiểm tra:
+- health
+- robots CRUD cơ bản (create/detail/enable/disable)
+- missions create + assign
+- orders + allocator + dashboard flow
+- telemetry ingest + latest
+
 ## Available APIs
 
 - `POST /robots`

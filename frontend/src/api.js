@@ -10,8 +10,15 @@ export function setApiBase(url) {
 }
 
 export async function api(path, options = {}) {
+  const headers = { ...(options.headers || {}) }
+  const hasBody = options.body !== undefined && options.body !== null
+  const hasContentType = Object.keys(headers).some((k) => k.toLowerCase() === 'content-type')
+  if (hasBody && !hasContentType && !(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json'
+  }
+
   const res = await fetch(`${getApiBase()}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers,
     ...options,
   })
 
